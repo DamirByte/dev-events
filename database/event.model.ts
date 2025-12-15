@@ -126,8 +126,6 @@ const EventSchema = new Schema<IEvent>(
   }
 );
 
-EventSchema.index({ slug: 1 }, { unique: true });
-
 EventSchema.pre<EventDocument>('save', function () {
   // Guard against whitespace-only strings that pass `required: true`.
   const requiredStrings: Array<keyof Pick<
