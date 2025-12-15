@@ -14,10 +14,11 @@ if (!MONGODB_URI) {
  * This prevents TypeScript errors when accessing global.mongoose
  */
 declare global {
-  // eslint-disable-next-line no-var
   var mongoose: {
     conn: mongoose.Connection | null;
     promise: Promise<mongoose.Connection> | null;
+    // simple flag to avoid race when multiple callers create a connection promise
+    creating?: boolean;
   };
 }
 
@@ -29,7 +30,7 @@ declare global {
 let cached = global.mongoose;
 
 if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
+  cached = global.mongoose = { conn: null, promise: null, creating: false };
 }
 
 /**
@@ -45,14 +46,29 @@ async function connectDB(): Promise<mongoose.Connection> {
   }
 
   // If connection promise doesn't exist, create a new one
-  if (!cached.promise) {
-    const opts = {
-      bufferCommands: false, // Disable command buffering
-    };
+  // Lightweight lock: if another caller is currently creating the promise,
+  // wait until they set `cached.promise`. Otherwise, set `cached.creating`
+  // and create/assign `cached.promise` ourselves.
+  while (cached.creating) {
+    // small delay to yield to the creator
+    await new Promise((r) => setTimeout(r, 5));
+  }
 
-    cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
-      return mongoose.connection;
-    });
+  if (!cached.promise) {
+    cached.creating = true;
+    try {
+      const opts = {
+        bufferCommands: false, // Disable command buffering
+      };
+
+      // assign the promise immediately so other callers can await it
+      cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
+        return mongoose.connection;
+      });
+    } finally {
+      // release the lock; if the promise rejects, downstream catch will reset it
+      cached.creating = false;
+    }
   }
 
   try {
@@ -61,6 +77,8 @@ async function connectDB(): Promise<mongoose.Connection> {
   } catch (error) {
     // Reset promise on error to allow retry
     cached.promise = null;
+    // ensure lock is not stuck
+    cached.creating = false;
     throw error;
   }
 

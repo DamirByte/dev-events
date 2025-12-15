@@ -4,7 +4,7 @@ import {
   models,
   type HydratedDocument,
   type Model,
-} from 'mongoose';
+} from "mongoose";
 
 export interface IEvent {
   title: string;
@@ -27,16 +27,16 @@ export interface IEvent {
 export type EventDocument = HydratedDocument<IEvent>;
 
 const isNonEmptyString = (value: unknown): value is string =>
-  typeof value === 'string' && value.trim().length > 0;
+  typeof value === "string" && value.trim().length > 0;
 
 const slugify = (value: string): string =>
   value
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 
 const normalizeISODate = (raw: string): string => {
   const value = raw.trim();
@@ -44,15 +44,18 @@ const normalizeISODate = (raw: string): string => {
   // Prefer keeping an explicit YYYY-MM-DD, but still validate it.
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     const asDate = new Date(`${value}T00:00:00.000Z`);
-    if (Number.isNaN(asDate.getTime())) throw new Error('Invalid date');
+    if (Number.isNaN(asDate.getTime())) throw new Error("Invalid date");
     return value;
   }
 
   const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) throw new Error('Invalid date');
+  if (Number.isNaN(parsed.getTime())) throw new Error("Invalid date");
+  // Build YYYY-MM-DD from UTC components to avoid timezone drift.
+  const year = parsed.getUTCFullYear();
+  const month = String(parsed.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(parsed.getUTCDate()).padStart(2, "0");
 
-  // Store as ISO date-only string to avoid timezone drift in date-only fields.
-  return parsed.toISOString().slice(0, 10);
+  return `${year}-${month}-${day}`;
 };
 
 const normalizeTime = (raw: string): string => {
@@ -61,7 +64,7 @@ const normalizeTime = (raw: string): string => {
   // 24h formats: HH:mm or HH:mm:ss
   const hm = /^([01]?\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(value);
   if (hm) {
-    const hh = hm[1].padStart(2, '0');
+    const hh = hm[1].padStart(2, "0");
     const mm = hm[2];
     return `${hh}:${mm}`;
   }
@@ -73,22 +76,25 @@ const normalizeTime = (raw: string): string => {
     const minutes = ap[2] ? Number(ap[2]) : 0;
     const suffix = ap[3].toLowerCase();
 
-    if (hours < 1 || hours > 12) throw new Error('Invalid time');
-    if (minutes < 0 || minutes > 59) throw new Error('Invalid time');
+    if (hours < 1 || hours > 12) throw new Error("Invalid time");
+    if (minutes < 0 || minutes > 59) throw new Error("Invalid time");
 
-    if (suffix === 'pm' && hours !== 12) hours += 12;
-    if (suffix === 'am' && hours === 12) hours = 0;
+    if (suffix === "pm" && hours !== 12) hours += 12;
+    if (suffix === "am" && hours === 12) hours = 0;
 
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
+      2,
+      "0"
+    )}`;
   }
 
-  throw new Error('Invalid time');
+  throw new Error("Invalid time");
 };
 
 const nonEmptyArray = (value: unknown): value is string[] =>
   Array.isArray(value) &&
   value.length > 0 &&
-  value.every((item) => typeof item === 'string' && item.trim().length > 0);
+  value.every((item) => typeof item === "string" && item.trim().length > 0);
 
 const EventSchema = new Schema<IEvent>(
   {
@@ -108,7 +114,7 @@ const EventSchema = new Schema<IEvent>(
       required: true,
       validate: {
         validator: nonEmptyArray,
-        message: 'Agenda must be a non-empty array of non-empty strings',
+        message: "Agenda must be a non-empty array of non-empty strings",
       },
     },
     organizer: { type: String, required: true, trim: true },
@@ -117,7 +123,7 @@ const EventSchema = new Schema<IEvent>(
       required: true,
       validate: {
         validator: nonEmptyArray,
-        message: 'Tags must be a non-empty array of non-empty strings',
+        message: "Tags must be a non-empty array of non-empty strings",
       },
     },
   },
@@ -126,33 +132,35 @@ const EventSchema = new Schema<IEvent>(
   }
 );
 
-EventSchema.pre<EventDocument>('save', function () {
+EventSchema.pre<EventDocument>("save", function () {
   // Guard against whitespace-only strings that pass `required: true`.
-  const requiredStrings: Array<keyof Pick<
-    IEvent,
-    | 'title'
-    | 'description'
-    | 'overview'
-    | 'image'
-    | 'venue'
-    | 'location'
-    | 'date'
-    | 'time'
-    | 'mode'
-    | 'audience'
-    | 'organizer'
-  >> = [
-    'title',
-    'description',
-    'overview',
-    'image',
-    'venue',
-    'location',
-    'date',
-    'time',
-    'mode',
-    'audience',
-    'organizer',
+  const requiredStrings: Array<
+    keyof Pick<
+      IEvent,
+      | "title"
+      | "description"
+      | "overview"
+      | "image"
+      | "venue"
+      | "location"
+      | "date"
+      | "time"
+      | "mode"
+      | "audience"
+      | "organizer"
+    >
+  > = [
+    "title",
+    "description",
+    "overview",
+    "image",
+    "venue",
+    "location",
+    "date",
+    "time",
+    "mode",
+    "audience",
+    "organizer",
   ];
 
   for (const key of requiredStrings) {
@@ -161,20 +169,22 @@ EventSchema.pre<EventDocument>('save', function () {
     }
   }
 
-  if (!nonEmptyArray(this.agenda)) throw new Error('agenda is required');
-  if (!nonEmptyArray(this.tags)) throw new Error('tags is required');
+  if (!nonEmptyArray(this.agenda)) throw new Error("agenda is required");
+  if (!nonEmptyArray(this.tags)) throw new Error("tags is required");
 
   // Only regenerate slug when title changes (or if it's missing on a new document).
-  if (this.isNew || this.isModified('title') || !isNonEmptyString(this.slug)) {
+  if (this.isNew || this.isModified("title") || !isNonEmptyString(this.slug)) {
     const nextSlug = slugify(this.title);
-    if (!nextSlug) throw new Error('Unable to generate slug from title');
+    if (!nextSlug) throw new Error("Unable to generate slug from title");
     this.slug = nextSlug;
   }
 
   // Normalize date/time to consistent storage formats.
-  if (this.isNew || this.isModified('date')) this.date = normalizeISODate(this.date);
-  if (this.isNew || this.isModified('time')) this.time = normalizeTime(this.time);
+  if (this.isNew || this.isModified("date"))
+    this.date = normalizeISODate(this.date);
+  if (this.isNew || this.isModified("time"))
+    this.time = normalizeTime(this.time);
 });
 
-export const Event: Model<IEvent> = (models.Event as Model<IEvent>) ||
-  model<IEvent>('Event', EventSchema);
+export const Event: Model<IEvent> =
+  (models.Event as Model<IEvent>) || model<IEvent>("Event", EventSchema);
