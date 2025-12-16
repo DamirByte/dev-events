@@ -51,6 +51,18 @@ const EventTags = ({ tags }: { tags: string[] }) => (
   </div>
 );
 
+/**
+ * Render the event details page for the provided event slug.
+ *
+ * Fetches event data for the slug and returns a JSX layout that displays the
+ * event banner, overview, details (date, time, location, mode, audience),
+ * agenda, organizer information, tags, a booking sidebar, and a list of similar events.
+ *
+ * @param params - An object that resolves to `{ slug: string }`, the event identifier to load
+ * @returns The rendered event details page element containing event content, booking UI, and similar events
+ *
+ * Note: If the fetched event has no `description`, the route will trigger Next.js's `notFound()` (404).
+ */
 export default async function EventDetailsPage({
   params,
 }: {

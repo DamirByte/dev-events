@@ -5,6 +5,11 @@ import { cacheLife } from "next/cache";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
+/**
+ * Server component that fetches events from the application's API and renders the home section with a heading, an explore button, and featured event cards.
+ *
+ * @returns The homepage JSX section containing the heading, subheading, an Explore button, and a list of featured event cards (the list may be empty if the API returns no events).
+ */
 export default async function page() {
   "use cache";
   cacheLife("hours");
