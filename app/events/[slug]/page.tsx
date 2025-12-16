@@ -7,7 +7,7 @@ export default async function EventDetailsPage({
   params: Promise<{ slug: string }>;
 }) {
   const slug = params.then((p) => p.slug);
-  [];
+
   return (
     <main>
       <Suspense fallback={<div>Loading event details...</div>}>
