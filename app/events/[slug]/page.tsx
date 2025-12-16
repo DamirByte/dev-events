@@ -58,23 +58,17 @@ export default async function EventDetailsPage({
 }) {
   const { slug } = await params;
   const request = await fetch(`${BASE_URL}/api/events/${slug}`);
-  const {
-    event: {
-      description,
-      image,
-      overview,
-      date,
-      time,
-      location,
-      mode,
-      agenda,
-      audience,
-      organizer,
-      tags,
-    },
-  } = await request.json();
 
-  if (!description) return notFound();
+  if (!request.ok) {
+    return notFound();
+  }
+
+  const data = await request.json();
+  const event = data?.event;
+
+  if (!event?.description) return notFound();
+
+  const { description, image, overview, date, time, location, mode, agenda, audience, organizer, tags } = event;
 
   const bookings = 10;
 
