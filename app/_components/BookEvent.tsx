@@ -1,6 +1,14 @@
 "use client";
 import { useState } from "react";
 
+/**
+ * Renders an email sign-up form and, after submission, displays a short confirmation message.
+ *
+ * The form accepts an email address and, when submitted, prevents the default navigation and
+ * switches the UI to a "Thank you for signing up!" message after a short delay.
+ *
+ * @returns A React element containing the sign-up form or the confirmation message
+ */
 export default function BookEvent() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
