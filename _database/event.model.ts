@@ -8,8 +8,8 @@ import {
 
 export interface IEvent {
   title: string;
-  // Auto-generated from title (kept optional for create calls; enforced in pre-save).
-  slug?: string;
+  // Auto-generated from title and always present on persisted documents.
+  slug: string;
   description: string;
   overview: string;
   image: string;
